@@ -7,6 +7,7 @@ import Dummy
 import numpy
 import cv2
 import skimage
+import heapq
 from skimage.metrics import mean_squared_error, structural_similarity
 
 # Task 1 [10] My first not-so-pretty image classifier
@@ -82,14 +83,18 @@ def validateDataFormat(data, predicted):
 #                             ARE NOT PERMITTED.
 #
 
-def readAndResize(image_path, width=60, height=30):
+def readAndResize(image_path, width=60, height=30, cache={}):
+    if image_path in cache:
+        return cache[image_path]
+    
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
     resized_img = numpy.array(cv2.resize(image, (width, height)))
 
     # cv2.imshow('image', resized_img) 
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-
+    
+    cache[image_path] = resized_img
     return resized_img
 
 
@@ -166,6 +171,20 @@ def selfComputeMeasure2(image1, image2):
 #
 def getClassesOfKNearestNeighbours(measures_classes, k, similarity_flag):
     nearest_neighbours_classes = {}
+    queue = []
+
+    for mClass in measures_classes:
+        if len(queue) < k:
+            heapq.heappush(queue, [mClass[0] if similarity_flag else -mClass[0], mClass[1]])
+        
+        val = mClass[0] if similarity_flag else -mClass[0]
+        if val > queue[0][0]:
+            heapq.heappush(queue, [val, mClass[1]])
+            heapq.heappop(queue)
+
+    while queue:
+        cur = heapq.heappop(queue)
+        nearest_neighbours_classes[cur[1]] = nearest_neighbours_classes.get(cur[1], 0) + 1
 
     return nearest_neighbours_classes
 
@@ -229,15 +248,23 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
         most_common_class_func=getMostCommonClass, get_neighbour_classes_func=getClassesOfKNearestNeighbours,
         read_func=readAndResize):
     # This sets the header list
-    classified_data = numpy.array([['Path', 'ActualClass', 'PredictedClass']])
+    classified_data = [['Path', 'ActualClass', 'PredictedClass']]
     # Have fun!
 
-    img1 = readAndResize(training_data[1][0])
-    img2 = readAndResize(training_data[2][0])
+    for data in data_to_classify[1:]:
+        image1 = read_func(data[0])
+        measures_classes = []
 
-    print(computeMeasure2(img1, img2))
+        for tData in training_data[1:]:
+            image2 = read_func(tData[0])
+            similarity = measure_func(image1, image2)
+            measures_classes.append([similarity, tData[1]])
+        
+        nearest_neighbours_classes = get_neighbour_classes_func(measures_classes, k, similarity_flag)
+        winner = most_common_class_func(nearest_neighbours_classes)
+        classified_data.append([data[0], data[1], winner])
 
-    return classified_data
+    return numpy.array(classified_data)
 
 
 ##########################################################################################

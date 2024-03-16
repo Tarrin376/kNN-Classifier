@@ -8,7 +8,9 @@ import numpy
 import cv2
 import skimage
 import heapq
+import math
 from skimage.metrics import mean_squared_error, structural_similarity
+from scipy.spatial import distance
 
 # Task 1 [10] My first not-so-pretty image classifier
 #
@@ -65,10 +67,20 @@ classification_scheme = ['Female', 'Male', 'Primate', 'Rodent', 'Food']
 #                             False otherwise
 
 def validateDataFormat(data, predicted):
-    formatCorrect = False
+    header = ",".join(data[0])
+    if header != f"Path,ActualClass{',PredictedClass' if predicted else ''}":
+        return False
 
-    return formatCorrect
-
+    if any(len(row) != (3 if predicted else 2) for row in data[1:]):
+        return False
+    elif any(not os.path.isfile(row[0]) for row in data[1:]):
+        return False
+    elif any(row[1] not in classification_scheme for row in data[1:]):
+        return False
+    elif predicted and any(row[2] not in classification_scheme for row in data[1:]):
+        return False
+    else:
+        return True
 
 # This function does reading and resizing of an image located in a give path on your drive.
 # DO NOT REMOVE ANY COLOURS. DO NOT MODIFY PATHS. DO NOT FLATTEN IMAGES.
@@ -89,10 +101,6 @@ def readAndResize(image_path, width=60, height=30, cache={}):
     
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
     resized_img = numpy.array(cv2.resize(image, (width, height)))
-
-    # cv2.imshow('image', resized_img) 
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
     
     cache[image_path] = resized_img
     return resized_img
@@ -118,17 +126,20 @@ def computeMeasure1(image1, image2):
     return mean_squared_error(image1, image2)
 
 def computeMeasure2(image1, image2):
-    # Write here what kind of measure you are using!
+    # Cosine Distance
+    if len(image1) == 0 or len(image2) == 0:
+        return float('nan')
+    
+    flattened_img1 = image1.flatten().astype(float)
+    flattened_img2 = image2.flatten().astype(float)
+    return distance.cosine(flattened_img1, flattened_img2)
+
+def computeMeasure3(image1, image2):
+    # Structural Similarity
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
 
-    return structural_similarity(image1, image2, channel_axis=-1)
-
-def computeMeasure3(image1, image2):
-    # Write here what kind of measure you are using!
-    value = float('nan')
-
-    return value
+    return structural_similarity(image1, image2, channel_axis=-1, data_range=255)
 
 
 # These functions compute the distance or similarity value between two images according to a particular similarity or
@@ -145,17 +156,24 @@ def computeMeasure3(image1, image2):
 #
 
 def selfComputeMeasure1(image1, image2):
-    # Write here what kind of measure you are using - it has to correspond to the approach in computeMeasure1
-    value = float('nan')
-
-    return value
-
+    # Mean Squared Error (MSE)
+    if len(image1) == 0 or len(image2) == 0:
+        return float('nan')
+    
+    mse = ((image1 - image2) ** 2).mean()
+    return mse
 
 def selfComputeMeasure2(image1, image2):
-    # Write here what kind of measure you are using - it has to correspond to the approach in computeMeasure2
-    value = float('nan')
+    # Cosine Distance
+    if len(image1) == 0 or len(image2) == 0:
+        return float('nan')
 
-    return value
+    def dot(a, b):
+        return sum(sum(sum(a * b)))
+    
+    img1Norm = math.sqrt(dot(image1, image1))
+    img2Norm = math.sqrt(dot(image2, image2))
+    return 1 - dot(image1, image2) / (img1Norm * img2Norm)
 
 
 # This function is supposed to return a dictionary of classes and their occurrences as taken from k nearest neighbours.
@@ -171,19 +189,19 @@ def selfComputeMeasure2(image1, image2):
 #
 def getClassesOfKNearestNeighbours(measures_classes, k, similarity_flag):
     nearest_neighbours_classes = {}
-    queue = []
+    pq = []
 
     for mClass in measures_classes:
-        if len(queue) < k:
-            heapq.heappush(queue, [mClass[0] if similarity_flag else -mClass[0], mClass[1]])
+        if len(pq) < k:
+            heapq.heappush(pq, [mClass[0] if similarity_flag else -mClass[0], mClass[1]])
         
         val = mClass[0] if similarity_flag else -mClass[0]
-        if val > queue[0][0]:
-            heapq.heappush(queue, [val, mClass[1]])
-            heapq.heappop(queue)
+        if val > pq[0][0]:
+            heapq.heappop(pq)
+            heapq.heappush(pq, [val, mClass[1]])
 
-    while queue:
-        cur = heapq.heappop(queue)
+    while pq:
+        cur = heapq.heappop(pq)
         nearest_neighbours_classes[cur[1]] = nearest_neighbours_classes.get(cur[1], 0) + 1
 
     return nearest_neighbours_classes
@@ -213,11 +231,8 @@ def getMostCommonClass(nearest_neighbours_classes):
         if timesFound > bestTimesFound:
             bestTimesFound = timesFound
             winner = class_type
-        
-    if bestTimesFound == 0:
-        return ''
 
-    return winner
+    return winner if bestTimesFound > 0 else ''
 
 
 # In this function I expect you to implement the kNN classifier. You are free to define any number of helper functions
@@ -251,18 +266,19 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
     classified_data = [['Path', 'ActualClass', 'PredictedClass']]
     # Have fun!
 
+    if (len(training_data) == 0 or len(data_to_classify) == 0 or not validateDataFormat(training_data, False) 
+        or not validateDataFormat(data_to_classify, False)):
+        return classified_data
+
     for data in data_to_classify[1:]:
         image1 = read_func(data[0])
-        measures_classes = []
-
-        for tData in training_data[1:]:
-            image2 = read_func(tData[0])
-            similarity = measure_func(image1, image2)
-            measures_classes.append([similarity, tData[1]])
-        
+        measures_classes = [[measure_func(image1, read_func(tData[0])), tData[1]] for tData in training_data[1:]]
         nearest_neighbours_classes = get_neighbour_classes_func(measures_classes, k, similarity_flag)
         winner = most_common_class_func(nearest_neighbours_classes)
         classified_data.append([data[0], data[1], winner])
+    
+    if not validateDataFormat(classified_data, True):
+        return [classified_data[0]]
 
     return numpy.array(classified_data)
 

@@ -68,19 +68,28 @@ classification_scheme = ['Female', 'Male', 'Primate', 'Rodent', 'Food']
 
 def validateDataFormat(data, predicted):
     header = ",".join(data[0])
+
+    # Checks the validity of the header row in the data
     if header != f"Path,ActualClass{',PredictedClass' if predicted else ''}":
         return False
 
+    # Check if there exists a row that is not of length 3 or 2 (depending on if the 'PredictedClass' column is present or not).
     if any(len(row) != (3 if predicted else 2) for row in data[1:]):
         return False
-    elif any(not os.path.isfile(row[0]) for row in data[1:]):
+    
+    # Check if there exists an image path in the data that doesn't lead to an existing file.
+    if any(not os.path.isfile(row[0]) for row in data[1:]):
         return False
-    elif any(row[1] not in classification_scheme for row in data[1:]):
+    
+    # Check if there exists a value in the 'ActualClass' column that is not from the scheme
+    if any(row[1] not in classification_scheme for row in data[1:]):
         return False
-    elif predicted and any(row[2] not in classification_scheme for row in data[1:]):
+    
+    # If the data contains a 'PredictedClass' column, check whether any value in the column is not from the scheme
+    if predicted and any(row[2] not in classification_scheme for row in data[1:]):
         return False
-    else:
-        return True
+    
+    return True
 
 # This function does reading and resizing of an image located in a give path on your drive.
 # DO NOT REMOVE ANY COLOURS. DO NOT MODIFY PATHS. DO NOT FLATTEN IMAGES.
@@ -96,12 +105,16 @@ def validateDataFormat(data, predicted):
 #
 
 def readAndResize(image_path, width=60, height=30, cache={}):
+    # To save on computation, if the image has already been resized, return the resized image stored in 'cache'.
     if image_path in cache:
         return cache[image_path]
     
+    # Read in the rgb image data from the image path given.
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    # Resize the image with the given width and height
     resized_img = numpy.array(cv2.resize(image, (width, height)))
     
+    # Cache the resized image
     cache[image_path] = resized_img
     return resized_img
 
@@ -120,6 +133,7 @@ def readAndResize(image_path, width=60, height=30, cache={}):
 
 def computeMeasure1(image1, image2):
     # Mean Squared Error (MSE)
+    # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
 
@@ -127,15 +141,20 @@ def computeMeasure1(image1, image2):
 
 def computeMeasure2(image1, image2):
     # Cosine Distance
+    # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
     
+    # Flatten image1 to 1-dimensional array
     flattened_img1 = image1.flatten().astype(float)
+    # Flatten image2 to 1-dimensional array
     flattened_img2 = image2.flatten().astype(float)
+
     return distance.cosine(flattened_img1, flattened_img2)
 
 def computeMeasure3(image1, image2):
     # Structural Similarity
+    # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
 
@@ -157,23 +176,40 @@ def computeMeasure3(image1, image2):
 
 def selfComputeMeasure1(image1, image2):
     # Mean Squared Error (MSE)
+    # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
     
-    mse = ((image1 - image2) ** 2).mean()
+    # Flatten image1 to 1-dimensional array
+    flattened_img1 = image1.flatten().astype(float)
+    # Flatten image2 to 1-dimensional array
+    flattened_img2 = image2.flatten().astype(float)
+
+    mse = ((flattened_img1 - flattened_img2) ** 2).mean()
     return mse
 
 def selfComputeMeasure2(image1, image2):
     # Cosine Distance
+    # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
 
+    # Calculates the dot product of two vectors 'a' and 'b'.
     def dot(a, b):
-        return sum(sum(sum(a * b)))
+        return sum(a * b)
     
-    img1Norm = math.sqrt(dot(image1, image1))
-    img2Norm = math.sqrt(dot(image2, image2))
-    return 1 - dot(image1, image2) / (img1Norm * img2Norm)
+    # Flatten image1 to 1-dimensional array
+    flattened_img1 = image1.flatten().astype(float)
+    # Flatten image2 to 1-dimensional array
+    flattened_img2 = image2.flatten().astype(float)
+
+    # Norm of image1
+    img1Norm = math.sqrt(dot(flattened_img1, flattened_img1))
+    # Norm of image2
+    img2Norm = math.sqrt(dot(flattened_img2, flattened_img2))
+
+    # Cosine distance formula
+    return 1 - dot(flattened_img1, flattened_img2) / (img1Norm * img2Norm)
 
 
 # This function is supposed to return a dictionary of classes and their occurrences as taken from k nearest neighbours.
@@ -189,19 +225,28 @@ def selfComputeMeasure2(image1, image2):
 #
 def getClassesOfKNearestNeighbours(measures_classes, k, similarity_flag):
     nearest_neighbours_classes = {}
+    # Priority Queue using a Min-Heap to get K nearest neighbours
     pq = []
 
     for mClass in measures_classes:
+        # If the Priority Queue does not have K elements on it, add class to Priority Queue.
         if len(pq) < k:
             heapq.heappush(pq, [mClass[0] if similarity_flag else -mClass[0], mClass[1]])
         
-        val = mClass[0] if similarity_flag else -mClass[0]
-        if val > pq[0][0]:
-            heapq.heappop(pq)
-            heapq.heappush(pq, [val, mClass[1]])
+        # Invert the measure if it is a distance measure, to maintain Min-Heap structure.
+        measure = mClass[0] if similarity_flag else -mClass[0]
 
+        # If the current row is closer compared to the furthest row on the Priority Queue.
+        if measure > pq[0][0]:
+            # Remove furthest row from Priority Queue.
+            heapq.heappop(pq)
+            # Add current row to Priority Queue.
+            heapq.heappush(pq, [measure, mClass[1]])
+
+    # Remove all the K nearest neighbours from the Priority Queue.
     while pq:
         cur = heapq.heappop(pq)
+        # Increment count for how many times a particular class from the scheme was found in the K nearest neighbours.
         nearest_neighbours_classes[cur[1]] = nearest_neighbours_classes.get(cur[1], 0) + 1
 
     return nearest_neighbours_classes
@@ -222,12 +267,16 @@ def getClassesOfKNearestNeighbours(measures_classes, k, similarity_flag):
 #
 
 def getMostCommonClass(nearest_neighbours_classes):
-    winner = ''
+    # Keeps track of the most number of times a given class was found in the K nearest neighbours.
     bestTimesFound = 0
+    # Keeps track of the class that occurs the most number of times in the K nearest neighbours.
+    winner = ''
 
     for class_type in classification_scheme:
+        # Number of times the class type was found in the K nearest neighbours.
         timesFound = nearest_neighbours_classes.get(class_type, 0)
 
+        # If it was found more than the current most frequent class, update.
         if timesFound > bestTimesFound:
             bestTimesFound = timesFound
             winner = class_type
@@ -266,17 +315,24 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
     classified_data = [['Path', 'ActualClass', 'PredictedClass']]
     # Have fun!
 
+    # Check that the training data and the data to classify is valid.
     if (len(training_data) == 0 or len(data_to_classify) == 0 or not validateDataFormat(training_data, False) 
         or not validateDataFormat(data_to_classify, False)):
         return classified_data
 
     for data in data_to_classify[1:]:
+        # Read image from file path.
         image1 = read_func(data[0])
+        # Compute the distance/similarity of all the training_data to the current data to classify.
         measures_classes = [[measure_func(image1, read_func(tData[0])), tData[1]] for tData in training_data[1:]]
+        # Get the classes found in the K nearest neighbours.
         nearest_neighbours_classes = get_neighbour_classes_func(measures_classes, k, similarity_flag)
+        # Find the class that occurred the most in the K nearest neighbours.
         winner = most_common_class_func(nearest_neighbours_classes)
+        # Add data along with its computed class type.
         classified_data.append([data[0], data[1], winner])
     
+    # Check that the classified data is valid
     if not validateDataFormat(classified_data, True):
         return [classified_data[0]]
 

@@ -17,6 +17,7 @@ import Task_1_5
 import Dummy
 import numpy
 
+
 # This function computes the confusion matrix based on the provided data.
 #
 # INPUT: classified_data   : a numpy arrays containing paths to images, actual classes and predicted classes.
@@ -29,7 +30,15 @@ import numpy
 #                            column of values that were actually Female
 
 def confusionMatrix(classified_data):
-    confusion_matrix = []
+    num_classes = len(Task_1_5.classification_scheme)
+    confusion_matrix = [[0] * num_classes for _ in range(num_classes)]
+    indices = {class_type:index for index, class_type in enumerate(Task_1_5.classification_scheme)}
+
+    for data in classified_data[1:]:
+        actual_class_index = indices.get(data[1])
+        predicted_class_index = indices.get(data[2])
+        confusion_matrix[predicted_class_index][actual_class_index] += 1
+
     return confusion_matrix
 
 
@@ -44,17 +53,21 @@ def confusionMatrix(classified_data):
 
 
 def computeTPs(confusion_matrix):
-    tps = []
+    num_classes = len(Task_1_5.classification_scheme)
+    tps = [confusion_matrix[i][i] for i in range(num_classes)]
     return tps
 
 
 def computeFPs(confusion_matrix):
-    fps = []
+    num_classes = len(Task_1_5.classification_scheme)
+    fps = [sum(confusion_matrix[i]) - confusion_matrix[i][i] for i in range(num_classes)]
     return fps
 
 
 def computeFNs(confusion_matrix):
-    fns = []
+    num_classes = len(Task_1_5.classification_scheme)
+    transpose_mat = numpy.array(confusion_matrix).transpose()
+    fns = [sum(transpose_mat[i]) - transpose_mat[i][i] for i in range(num_classes)]
     return fns
 
 
@@ -65,22 +78,40 @@ def computeFNs(confusion_matrix):
 # OUTPUT: appropriate evaluation measures created using the macro-average approach.
 
 def computeMacroPrecision(tps, fps, fns, data_size):
-    precision = float(0)
+    if data_size == 0:
+        return 0
+    
+    def computePrecision(tp, fp):
+        return tp / (tp + fp) if tp + fp > 0 else 0
+
+    precision = sum([computePrecision(tps[i], fps[i]) for i in range(data_size)]) / data_size
     return precision
 
 
 def computeMacroRecall(tps, fps, fns, data_size):
-    recall = float(0)
+    if data_size == 0:
+        return 0
+    
+    def computeRecall(tp, fn):
+        return tp / (tp + fn) if tp + fn > 0 else 0
+
+    recall = sum([computeRecall(tps[i], fns[i]) for i in range(data_size)]) / data_size
     return recall
 
 
 def computeMacroFMeasure(tps, fps, fns, data_size):
-    f_measure = float(0)
+    precision = computeMacroPrecision(tps, fps, fns, data_size)
+    recall = computeMacroRecall(tps, fps, fns, data_size)
+
+    if precision + recall == 0:
+        return 0
+
+    f_measure = (2 * precision * recall) / (precision + recall)
     return f_measure
 
 
 def computeAccuracy(tps, fps, fns, data_size):
-    accuracy = float(0)
+    accuracy = sum(tps) / data_size if data_size > 0 else 0
     return accuracy
 
 
@@ -93,11 +124,17 @@ def computeAccuracy(tps, fps, fns, data_size):
 #
 # OUTPUT: computed measures
 def evaluateKNN(classified_data, confusion_func=confusionMatrix):
-    precision = float(-1)
-    recall = float(-1)
-    f_measure = float(-1)
-    accuracy = float(-1)
     # Have fun with the computations!
+    confusion_matrix = confusion_func(classified_data)
+    tps = computeTPs(confusion_matrix)
+    fps = computeFPs(confusion_matrix)
+    fns = computeFNs(confusion_matrix)
+    
+    num_classes = len(Task_1_5.classification_scheme)
+    precision = computeMacroPrecision(tps, fps, fns, num_classes)
+    recall = computeMacroRecall(tps, fps, fns, num_classes)
+    f_measure = computeMacroFMeasure(tps, fps, fns, num_classes)
+    accuracy = computeAccuracy(tps, fps, fns, len(classified_data) - 1)
 
     # once ready, we return the values
     return precision, recall, f_measure, accuracy

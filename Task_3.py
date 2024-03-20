@@ -32,22 +32,19 @@ from Task_1_5 import computeMeasure1,computeMeasure2,computeMeasure3,selfCompute
 #                             (e.g. contain the right headers already)
 
 def splitDataForCrossValidation(training_data, f):
-    header = training_data[0]
     num_rows = len(training_data) - 1
     fold_size = int(round(num_rows / f))
  
     folds = []
     for i in range(0, f):
-        fold = [i, [header.copy()], [header.copy()]]
+        fold = [i, [training_data[0].copy()], [training_data[0].copy()]]
         for index, row in enumerate(training_data[1:]):
             if index >= i * fold_size and index < min(num_rows, (i * fold_size) + fold_size):
                 fold[1].append(row)
             else:
                 fold[2].append(row)
         
-        fold[1] = numpy.array(fold[1])
-        fold[2] = numpy.array(fold[2])
-        folds.append(fold)
+        folds.append([fold[0], numpy.array(fold[1]), numpy.array(fold[2])])
     
     return folds
 

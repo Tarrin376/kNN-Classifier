@@ -329,7 +329,7 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
         nearest_neighbours_classes = get_neighbour_classes_func(measures_classes, k, similarity_flag)
         # Find the class that occurred the most in the K nearest neighbours.
         winner = most_common_class_func(nearest_neighbours_classes)
-        # Add data along with its computed class type.
+        # Add data along with its computed class type 'winner'.
         classified_data.append([data[0], data[1], winner])
     
     # Check that the classified data is valid

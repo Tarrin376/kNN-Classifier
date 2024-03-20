@@ -32,11 +32,14 @@ import numpy
 def confusionMatrix(classified_data):
     num_classes = len(Task_1_5.classification_scheme)
     confusion_matrix = [[0] * num_classes for _ in range(num_classes)]
+    # Maps each class to its index in the 'classification_scheme' array.
     indices = {class_type:index for index, class_type in enumerate(Task_1_5.classification_scheme)}
 
     for data in classified_data[1:]:
         actual_class_index = indices.get(data[1])
         predicted_class_index = indices.get(data[2])
+
+        # Increment the number of times that the given 'predicted class' was found with the given 'actual class'.
         confusion_matrix[predicted_class_index][actual_class_index] += 1
 
     return confusion_matrix
@@ -54,12 +57,14 @@ def confusionMatrix(classified_data):
 
 def computeTPs(confusion_matrix):
     num_classes = len(Task_1_5.classification_scheme)
+    # Array of the number of times each class was predicted correctly (true positives).
     tps = [confusion_matrix[i][i] for i in range(num_classes)]
     return tps
 
 
 def computeFPs(confusion_matrix):
     num_classes = len(Task_1_5.classification_scheme)
+    # Array of the number of times each class was incorrectly predicted to belong to that class (false positives).
     fps = [sum(confusion_matrix[i]) - confusion_matrix[i][i] for i in range(num_classes)]
     return fps
 
@@ -67,6 +72,7 @@ def computeFPs(confusion_matrix):
 def computeFNs(confusion_matrix):
     num_classes = len(Task_1_5.classification_scheme)
     transpose_mat = numpy.array(confusion_matrix).transpose()
+    # Array of the number of times each class was incorrectly predicted not to belong to that class (false negatives).
     fns = [sum(transpose_mat[i]) - transpose_mat[i][i] for i in range(num_classes)]
     return fns
 
@@ -81,9 +87,11 @@ def computeMacroPrecision(tps, fps, fns, data_size):
     if data_size == 0:
         return 0
     
+    # Function that computes the precision for a given class.
     def computePrecision(tp, fp):
         return tp / (tp + fp) if tp + fp > 0 else 0
 
+    # The macro-average precision of all classes.
     precision = sum([computePrecision(tps[i], fps[i]) for i in range(data_size)]) / data_size
     return precision
 
@@ -92,25 +100,32 @@ def computeMacroRecall(tps, fps, fns, data_size):
     if data_size == 0:
         return 0
     
+    # Function that computes the recall for a given class.
     def computeRecall(tp, fn):
         return tp / (tp + fn) if tp + fn > 0 else 0
 
+    # The macro-average recall of all classes.
     recall = sum([computeRecall(tps[i], fns[i]) for i in range(data_size)]) / data_size
     return recall
 
 
 def computeMacroFMeasure(tps, fps, fns, data_size):
+    # The macro-average precision of all classes.
     precision = computeMacroPrecision(tps, fps, fns, data_size)
+    # The macro-average recall of all classes.
     recall = computeMacroRecall(tps, fps, fns, data_size)
 
+    # Edge case to prevent divide by zero exception.
     if precision + recall == 0:
         return 0
 
+    # F-Measure formula.
     f_measure = (2 * precision * recall) / (precision + recall)
     return f_measure
 
 
 def computeAccuracy(tps, fps, fns, data_size):
+    # Ratio of the number of true positives to the number of rows in the dataset.
     accuracy = sum(tps) / data_size if data_size > 0 else 0
     return accuracy
 
@@ -124,13 +139,16 @@ def computeAccuracy(tps, fps, fns, data_size):
 #
 # OUTPUT: computed measures
 def evaluateKNN(classified_data, confusion_func=confusionMatrix):
-    # Have fun with the computations!
     confusion_matrix = confusion_func(classified_data)
+    num_classes = len(Task_1_5.classification_scheme)
+
+    # Number of true positives in the confusion matrix.
     tps = computeTPs(confusion_matrix)
+    # Number of false positives in the confusion matrix.
     fps = computeFPs(confusion_matrix)
+    # Number of false negatives in the confusion matrix.
     fns = computeFNs(confusion_matrix)
     
-    num_classes = len(Task_1_5.classification_scheme)
     precision = computeMacroPrecision(tps, fps, fns, num_classes)
     recall = computeMacroRecall(tps, fps, fns, num_classes)
     f_measure = computeMacroFMeasure(tps, fps, fns, num_classes)

@@ -33,17 +33,23 @@ from Task_1_5 import computeMeasure1,computeMeasure2,computeMeasure3,selfCompute
 
 def splitDataForCrossValidation(training_data, f):
     num_rows = len(training_data) - 1
+    # The size of each fold after splitting the training data into 'f' folds.
     fold_size = int(round(num_rows / f))
- 
+    # List of lists containing every fold.
     folds = []
+
     for i in range(0, f):
+        # The current fold 'i'.
         fold = [i, [training_data[0].copy()], [training_data[0].copy()]]
         for index, row in enumerate(training_data[1:]):
+            # If the row is in the current fold, add it to the testing data for this fold.
+            # Otherwise, add it to the training data for this fold.
             if index >= i * fold_size and index < min(num_rows, (i * fold_size) + fold_size):
                 fold[1].append(row)
             else:
                 fold[2].append(row)
         
+        # Add an array containing the current fold number, testing data, and the training data.
         folds.append([fold[0], numpy.array(fold[1]), numpy.array(fold[2])])
     
     return folds
@@ -71,7 +77,7 @@ def splitDataForCrossValidation(training_data, f):
 def validateDataFormat(data, f):
     header = ",".join(data[0])
 
-    # Check the validity of the header row in the data
+    # Check the validity of the header row in the data.
     if not header.startswith("Path,ActualClass,PredictedClass,FoldNumber"):
         return False
 
@@ -124,6 +130,8 @@ def validateDataFormat(data, f):
 
 def evaluateCrossValidation(classified_data_list, evaluation_func=Task_2.evaluateKNN):
     rounds = len(classified_data_list)
+
+    # Edge case, to prevent divide by zero exception.
     if rounds == 0:
         return 0, 0, 0, 0
     
@@ -132,6 +140,7 @@ def evaluateCrossValidation(classified_data_list, evaluation_func=Task_2.evaluat
     avg_f_measure = 0
     avg_accuracy = 0
 
+    # Iterate through each classified round and compute its statistics and add them to the average sums.
     for round in classified_data_list:
         precision, recall, f_measure, accuracy = evaluation_func(round)
         avg_precision += precision
@@ -139,6 +148,7 @@ def evaluateCrossValidation(classified_data_list, evaluation_func=Task_2.evaluat
         avg_f_measure += f_measure
         avg_accuracy += accuracy
 
+    # Compute the average of each statistic.
     return avg_precision / rounds, avg_recall / rounds, avg_f_measure / rounds, avg_accuracy / rounds
 
 
@@ -168,19 +178,25 @@ def crossEvaluateKNN(training_data, k, measure_func, similarity_flag, f, knn_fun
                      split_func=splitDataForCrossValidation):
     # This adds the header
     processed = [['Path', 'ActualClass', 'PredictedClass', 'FoldNumber']]
+    # List of lists containing each fold.
     folds = split_func(training_data, f)
+    # List that will hold the classified data computed for each fold.
     classified_data_list = []
 
     for fold in folds:
+        # The classified fold testing data.
         classified = knn_func(fold[1], k, measure_func, similarity_flag, fold[2])
         classified_data_list.append(classified)
 
         for row in classified[1:]:
+            # Add the row consisting of the 'Path', 'ActualClass', 'PredictedClass', and 'FoldNumber' respectively.
             processed.append([row[0], row[1], row[2], fold[0]])
     
+    # Validate the data format of 'processed' given the numbers of folds 'f'.
     if not validateDataFormat(processed, f):
         return numpy.array([processed[0]])
     
+    # Averages of all classified rounds.
     avg_precision, avg_recall, avg_fMeasure, avg_accuracy = evaluateCrossValidation(classified_data_list)
 
     # The measures are now added to the end. You should invoke validation BEFORE this step.

@@ -69,7 +69,7 @@ classification_scheme = ['Female', 'Male', 'Primate', 'Rodent', 'Food']
 def validateDataFormat(data, predicted):
     header = ",".join(data[0])
 
-    # Checks the validity of the header row in the data
+    # Check the validity of the header row in the data
     if header != f"Path,ActualClass{',PredictedClass' if predicted else ''}":
         return False
 

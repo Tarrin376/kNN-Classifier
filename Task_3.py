@@ -32,7 +32,24 @@ from Task_1_5 import computeMeasure1,computeMeasure2,computeMeasure3,selfCompute
 #                             (e.g. contain the right headers already)
 
 def splitDataForCrossValidation(training_data, f):
-    return
+    header = training_data[0]
+    num_rows = len(training_data) - 1
+    fold_size = int(round(num_rows / f))
+ 
+    folds = []
+    for i in range(0, f):
+        fold = [i, [header.copy()], [header.copy()]]
+        for index, row in enumerate(training_data[1:]):
+            if index >= i * fold_size and index < min(num_rows, (i * fold_size) + fold_size):
+                fold[1].append(row)
+            else:
+                fold[2].append(row)
+        
+        fold[1] = numpy.array(fold[1])
+        fold[2] = numpy.array(fold[2])
+        folds.append(fold)
+    
+    return folds
 
 
 # In this function, please implement validation of the data that is produced by the cross evaluation function PRIOR to
@@ -55,9 +72,45 @@ def splitDataForCrossValidation(training_data, f):
 #                             False otherwise
 
 def validateDataFormat(data, f):
-    formatCorrect = False
+    header = ",".join(data[0])
 
-    return formatCorrect
+    # Check the validity of the header row in the data
+    if not header.startswith("Path,ActualClass,PredictedClass,FoldNumber"):
+        return False
+
+    # Check if there exists a row that is not of at least length 4.
+    if any(len(row) < 4 for row in data[1:]):
+        return False
+    
+    # Check if there exists an image path in the data that doesn't lead to an existing file.
+    if any(not os.path.isfile(row[0]) for row in data[1:]):
+        return False
+    
+    # Check if there exists a value in the 'ActualClass' column that is not from the scheme.
+    if any(row[1] not in Task_1_5.classification_scheme for row in data[1:]):
+        return False
+    
+    # Check if there exists a value in the 'PredictedClass' column is not from the scheme.
+    if any(row[2] not in Task_1_5.classification_scheme for row in data[1:]):
+        return False
+    
+    # Check if any fold number entry is outside the bounds of 'f'.
+    if (any(row[3] < 0 or row[3] >= f for row in data[1:])):
+        return False
+    
+    # Frequency of the number of entries for each integer in [0,f) range for FoldNumber.
+    freq = {}
+    for row in data[1:]:
+        freq[row[3]] = freq.get(row[3], 0) + 1
+
+    minFreq = min(freq.values())
+    maxFreq = max(freq.values())
+
+    # Check if the difference betweeen the lowest and highest frequency entries is larger than 1.
+    if maxFreq - minFreq > 1:
+        return False
+
+    return True
 
 
 # This function takes the classified data from each cross validation round and calculates the average precision, recall,
@@ -73,14 +126,23 @@ def validateDataFormat(data, f):
 #                             list and average out these values in the usual way.
 
 def evaluateCrossValidation(classified_data_list, evaluation_func=Task_2.evaluateKNN):
-    avg_precision = float(-1)
-    avg_recall = float(-1)
-    avg_f_measure = float(-1)
-    avg_accuracy = float(-1)
-    # There are multiple ways to count average measures during cross-validation. For the purpose of this portfolio,
-    # it's fine to just compute the values for each round and average them out in the usual way.
+    rounds = len(classified_data_list)
+    if rounds == 0:
+        return 0, 0, 0, 0
+    
+    avg_precision = 0
+    avg_recall = 0
+    avg_f_measure = 0
+    avg_accuracy = 0
 
-    return avg_precision, avg_recall, avg_f_measure, avg_accuracy
+    for round in classified_data_list:
+        precision, recall, f_measure, accuracy = evaluation_func(round)
+        avg_precision += precision
+        avg_recall += recall
+        avg_f_measure += f_measure
+        avg_accuracy += accuracy
+
+    return avg_precision / rounds, avg_recall / rounds, avg_f_measure / rounds, avg_accuracy / rounds
 
 
 # In this task you are expected to perform cross-validation where f defines the number of folds to consider.
@@ -108,19 +170,27 @@ def evaluateCrossValidation(classified_data_list, evaluation_func=Task_2.evaluat
 def crossEvaluateKNN(training_data, k, measure_func, similarity_flag, f, knn_func=Task_1_5.kNN,
                      split_func=splitDataForCrossValidation):
     # This adds the header
-    processed = numpy.array([['Path', 'ActualClass', 'PredictedClass', 'FoldNumber']])
-    avg_precision = -1.0;
-    avg_recall = -1.0;
-    avg_fMeasure = -1.0;
-    avg_accuracy = -1.0;
+    processed = [['Path', 'ActualClass', 'PredictedClass', 'FoldNumber']]
+    folds = split_func(training_data, f)
+    classified_data_list = []
 
-    classified_list = []
-    # Have fun with the computations!
+    for fold in folds:
+        classified = knn_func(fold[1], k, measure_func, similarity_flag, fold[2])
+        classified_data_list.append(classified)
+
+        for row in classified[1:]:
+            processed.append([row[0], row[1], row[2], fold[0]])
+    
+    if not validateDataFormat(processed, f):
+        return numpy.array([processed[0]])
+    
+    avg_precision, avg_recall, avg_fMeasure, avg_accuracy = evaluateCrossValidation(classified_data_list)
 
     # The measures are now added to the end. You should invoke validation BEFORE this step.
     h = ['avg_precision', 'avg_recall', 'avg_f_measure', 'avg_accuracy']
     v = [avg_precision, avg_recall, avg_fMeasure, avg_accuracy]
 
+    processed = numpy.array(processed)
     processed = numpy.append(processed, [h], axis=0)
     processed = numpy.append(processed, [v], axis=0)
 

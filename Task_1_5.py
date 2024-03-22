@@ -313,7 +313,6 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
         read_func=readAndResize):
     # This sets the header list
     classified_data = [['Path', 'ActualClass', 'PredictedClass']]
-    # Have fun!
 
     # Check that the training data and the data to classify is valid.
     if (len(training_data) == 0 or len(data_to_classify) == 0 or not validateDataFormat(training_data, False) 

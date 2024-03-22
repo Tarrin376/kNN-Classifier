@@ -32,35 +32,29 @@ from Task_1_5 import computeMeasure1,computeMeasure2,computeMeasure3,selfCompute
 #                             (e.g. contain the right headers already)
 
 def splitDataForCrossValidation(training_data, f):
+    header = numpy.array([training_data[0].copy()])
+    training_data = training_data[1:]
+
     num_rows = len(training_data) - 1
     # The size of each fold after splitting the training data into 'f' folds.
     fold_size = num_rows // f
     # Remainder after splitting data into 'f' parts.
     rem = num_rows % f
-    # Flag stating if the fold size is evenly divisible by the number of training data rows.
-    evenly_div = num_rows % f == 0
-    # List of lists containing every fold.
+    # List of lists that stores every fold
     folds = []
 
     for i in range(0, f):
-        # The current fold 'i'.
-        fold = [i, [training_data[0].copy()], [training_data[0].copy()]]
-        # Starting point of fold test data.
-        start = (i * fold_size) + 1 if rem >= 0 and not evenly_div and i > 0 else (i * fold_size)
-        # Ending point of fold test data (exclusive).
+        # Start and end points of the fold test data.
+        start = (i * fold_size) + 1 if rem >= 0 and num_rows % f != 0 and i > 0 else (i * fold_size)
         end = min(num_rows, start + fold_size + 1 if rem > 0 else start + fold_size)
 
-        for index, row in enumerate(training_data[1:]):
-            # If the row is in the current fold, add to testing data, otherwise, add to training data.
-            if index >= start and index < end:
-                fold[1].append(row)
-            else:
-                fold[2].append(row)
-        
-        rem -= 1
-        
+        # Testing and training data for fold 'i'.
+        fold_training = numpy.concatenate((header, numpy.array(training_data[:start]), numpy.array(training_data[end:])), axis=0)
+        fold_testing = numpy.concatenate((header, numpy.array(training_data[start:end])), axis=0)
+
         # Add an array containing the current fold number, testing data, and the training data.
-        folds.append([fold[0], numpy.array(fold[1]), numpy.array(fold[2])])
+        folds.append([i, fold_testing, fold_training])
+        rem -= 1
     
     return folds
 
@@ -118,6 +112,8 @@ def validateDataFormat(data, f):
 
     minFreq = min(freq.values())
     maxFreq = max(freq.values())
+
+    print(freq)
 
     # Check if the difference betweeen the lowest and highest frequency entries is larger than 1.
     if maxFreq - minFreq > 1:

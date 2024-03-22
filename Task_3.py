@@ -34,20 +34,30 @@ from Task_1_5 import computeMeasure1,computeMeasure2,computeMeasure3,selfCompute
 def splitDataForCrossValidation(training_data, f):
     num_rows = len(training_data) - 1
     # The size of each fold after splitting the training data into 'f' folds.
-    fold_size = int(round(num_rows / f))
+    fold_size = num_rows // f
+    # Remainder after splitting data into 'f' parts.
+    rem = num_rows % f
+    # Flag stating if the fold size is evenly divisible by the number of training data rows.
+    evenly_div = num_rows % f == 0
     # List of lists containing every fold.
     folds = []
 
     for i in range(0, f):
         # The current fold 'i'.
         fold = [i, [training_data[0].copy()], [training_data[0].copy()]]
+        # Starting point of fold test data.
+        start = (i * fold_size) + 1 if rem >= 0 and not evenly_div and i > 0 else (i * fold_size)
+        # Ending point of fold test data (exclusive).
+        end = min(num_rows, start + fold_size + 1 if rem > 0 else start + fold_size)
+
         for index, row in enumerate(training_data[1:]):
-            # If the row is in the current fold, add it to the testing data for this fold.
-            # Otherwise, add it to the training data for this fold.
-            if index >= i * fold_size and index < min(num_rows, (i * fold_size) + fold_size):
+            # If the row is in the current fold, add to testing data, otherwise, add to training data.
+            if index >= start and index < end:
                 fold[1].append(row)
             else:
                 fold[2].append(row)
+        
+        rem -= 1
         
         # Add an array containing the current fold number, testing data, and the training data.
         folds.append([fold[0], numpy.array(fold[1]), numpy.array(fold[2])])
@@ -185,7 +195,7 @@ def crossEvaluateKNN(training_data, k, measure_func, similarity_flag, f, knn_fun
 
     for fold in folds:
         # The classified fold testing data.
-        classified = knn_func(fold[1], k, measure_func, similarity_flag, fold[2])
+        classified = knn_func(fold[2], k, measure_func, similarity_flag, fold[1])
         classified_data_list.append(classified)
 
         for row in classified[1:]:

@@ -31,6 +31,7 @@ import numpy
 
 def confusionMatrix(classified_data):
     num_classes = len(Task_1_5.classification_scheme)
+    # The confusion matrix
     confusion_matrix = [[0] * num_classes for _ in range(num_classes)]
     # Maps each class to its index in the 'classification_scheme' array.
     indices = {class_type:index for index, class_type in enumerate(Task_1_5.classification_scheme)}

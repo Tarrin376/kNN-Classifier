@@ -105,7 +105,7 @@ def validateDataFormat(data, predicted):
 #
 
 def readAndResize(image_path, width=60, height=30, cache={}):
-    # To save on computation, if the image has already been resized, return the resized image stored in 'cache'.
+    # To save computation, if the image has already been resized, return the resized image stored in the cache.
     if image_path in cache:
         return cache[image_path]
     

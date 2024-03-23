@@ -72,7 +72,7 @@ def computeFPs(confusion_matrix):
 
 def computeFNs(confusion_matrix):
     num_classes = len(Task_1_5.classification_scheme)
-    transpose_mat = numpy.array(confusion_matrix).transpose()
+    transpose_mat = numpy.transpose(confusion_matrix)
     # Array of the number of times each class was incorrectly predicted not to belong to that class (false negatives).
     fns = [sum(transpose_mat[i]) - transpose_mat[i][i] for i in range(num_classes)]
     return fns
@@ -126,8 +126,11 @@ def computeMacroFMeasure(tps, fps, fns, data_size):
 
 
 def computeAccuracy(tps, fps, fns, data_size):
+    if data_size == 0:
+        return 0
+    
     # Ratio of the number of true positives to the number of rows in the dataset.
-    accuracy = sum(tps) / data_size if data_size > 0 else 0
+    accuracy = sum(tps) / data_size
     return accuracy
 
 

@@ -11,8 +11,8 @@
 # The reference must be a handbook or peer-reviewed publication; a link to an online tutorial will not be accepted.
 # Ensure that your resources are respectable and are not e.g., predatory journals.
 
-# We could use the kTree method. This approach involves learning the optimal k value for each test data point by 
-# constructing a decision tree called a kTree that can learn the optimal k values for all training samples.
+# We could use the kTree method. This method involves constructing a decision tree, known as a kTree, 
+# to learn the optimal k value for each test data point based on the training samples.
 
 # Zhang, S., Li, X., Zong, M., Zhu, X., & Wang, R. (2018). Efficient kNN Classification With Different Numbers of Nearest Neighbors. 
 # IEEE Transactions on Neural Networks and Learning Systems, 29(5), 1774-1785. doi:10.1109/TNNLS.2017.2673241.
@@ -32,7 +32,7 @@
 #
 # You can start working on this task immediately. Please consult at the very least Week 2 materials.
 
-# An approach that we could use is Convolutional Neural Networks. Using CNNs provides more accurate results
+# An approach that we could use is Convolutional Neural Networks (CNNs). Using CNNs provides more accurate results
 # compared to kNN for image classification as CNNs use features within the images to classify them, unlike kNN
 # which compares images by raw pixel data. Additionally, as CNNs use convolutions, they can better handle issues that kNN faces 
 # in image classification such as rotation, scaling, and repositioning which enables it to effectively compare two images that have different

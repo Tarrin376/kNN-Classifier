@@ -33,14 +33,14 @@ from Task_1_5 import computeMeasure1,computeMeasure2,computeMeasure3,selfCompute
 
 def splitDataForCrossValidation(training_data, f):
     header = numpy.array([training_data[0].copy()])
-    training_data = training_data[1:]
+    data = training_data[1:]
 
-    num_rows = len(training_data) - 1
-    # The size of each fold after splitting the training data into 'f' folds.
+    num_rows = len(data)
+    # The size of each fold after splitting the data into 'f' folds.
     fold_size = num_rows // f
     # Remainder after splitting data into 'f' parts.
     rem = num_rows % f
-    # List of lists that stores every fold
+    # List of lists that stores every fold.
     folds = []
 
     for i in range(0, f):
@@ -49,8 +49,8 @@ def splitDataForCrossValidation(training_data, f):
         end = min(num_rows, start + fold_size + 1 if rem > 0 else start + fold_size)
 
         # Testing and training data for fold 'i'.
-        fold_training = numpy.concatenate((header, numpy.array(training_data[:start]), numpy.array(training_data[end:])), axis=0)
-        fold_testing = numpy.concatenate((header, numpy.array(training_data[start:end])), axis=0)
+        fold_training = numpy.concatenate((header, numpy.array(data[:start]), numpy.array(data[end:])), axis=0)
+        fold_testing = numpy.concatenate((header, numpy.array(data[start:end])), axis=0)
 
         # Add an array containing the current fold number, testing data, and the training data.
         folds.append([i, fold_testing, fold_training])
@@ -85,7 +85,7 @@ def validateDataFormat(data, f):
     if not header.startswith("Path,ActualClass,PredictedClass,FoldNumber"):
         return False
 
-    # Check if there exists a row that is not of at least length 4.
+    # Check if there exists a row that has a length less than 4.
     if any(len(row) < 4 for row in data[1:]):
         return False
     
@@ -112,8 +112,6 @@ def validateDataFormat(data, f):
 
     minFreq = min(freq.values())
     maxFreq = max(freq.values())
-
-    print(freq)
 
     # Check if the difference betweeen the lowest and highest frequency entries is larger than 1.
     if maxFreq - minFreq > 1:

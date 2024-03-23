@@ -73,8 +73,8 @@ def validateDataFormat(data, predicted):
     if header != f"Path,ActualClass{',PredictedClass' if predicted else ''}":
         return False
 
-    # Check if there exists a row that is not of length 3 or 2 (depending on if the 'PredictedClass' column is present or not).
-    if any(len(row) != (3 if predicted else 2) for row in data[1:]):
+    # Check if there exists a row that has a length less than 3 or 2 (depending on if the 'PredictedClass' column is present or not).
+    if any(len(row) < (3 if predicted else 2) for row in data[1:]):
         return False
     
     # Check if there exists an image path in the data that doesn't lead to an existing file.

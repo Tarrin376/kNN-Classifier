@@ -35,6 +35,7 @@ def splitDataForCrossValidation(training_data, f):
     header = numpy.array([training_data[0].copy()])
     data = training_data[1:]
 
+    # Number of rows in the data (excluding the header).
     num_rows = len(data)
     # The size of each fold after splitting the data into 'f' folds.
     fold_size = num_rows // f
@@ -44,16 +45,17 @@ def splitDataForCrossValidation(training_data, f):
     folds = []
 
     for i in range(0, f):
-        # Start and end points of the fold test data.
+        # Start and end indices of fold i's test data.
         start = (i * fold_size) + 1 if rem >= 0 and num_rows % f != 0 and i > 0 else (i * fold_size)
         end = min(num_rows, start + fold_size + 1 if rem > 0 else start + fold_size)
 
-        # Testing and training data for fold 'i'.
+        # Testing and training data for fold i.
         fold_training = numpy.concatenate((header, numpy.array(data[:start]), numpy.array(data[end:])), axis=0)
         fold_testing = numpy.concatenate((header, numpy.array(data[start:end])), axis=0)
 
         # Add an array containing the current fold number, testing data, and the training data.
         folds.append([i, fold_testing, fold_training])
+        # Decrement the remainder to ensure that the splits are evenly divided with at most a difference of 1.
         rem -= 1
     
     return folds

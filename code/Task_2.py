@@ -14,7 +14,6 @@
 # own and need here, must be defined here.
 
 import Task_1_5
-import Dummy
 import numpy
 
 

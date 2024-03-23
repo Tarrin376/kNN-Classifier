@@ -15,7 +15,6 @@
 import os
 import Task_1_5
 import Task_2
-import Dummy
 import numpy
 from Task_1_5 import computeMeasure1,computeMeasure2,computeMeasure3,selfComputeMeasure1,selfComputeMeasure2
 

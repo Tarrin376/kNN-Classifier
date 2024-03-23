@@ -3,7 +3,6 @@ import csv
 import distutils.util
 import distutils
 import os
-import Dummy
 import numpy
 import cv2
 import skimage
@@ -194,7 +193,7 @@ def selfComputeMeasure1(image1, image2):
 
 def selfComputeMeasure2(image1, image2):
     # Cosine Distance
-    
+
     # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')

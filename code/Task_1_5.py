@@ -133,6 +133,7 @@ def readAndResize(image_path, width=60, height=30, cache={}):
 
 def computeMeasure1(image1, image2):
     # Mean Squared Error (MSE)
+
     # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
@@ -141,6 +142,7 @@ def computeMeasure1(image1, image2):
 
 def computeMeasure2(image1, image2):
     # Cosine Distance
+
     # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
@@ -154,6 +156,7 @@ def computeMeasure2(image1, image2):
 
 def computeMeasure3(image1, image2):
     # Structural Similarity
+
     # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
@@ -176,6 +179,7 @@ def computeMeasure3(image1, image2):
 
 def selfComputeMeasure1(image1, image2):
     # Mean Squared Error (MSE)
+
     # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')
@@ -190,6 +194,7 @@ def selfComputeMeasure1(image1, image2):
 
 def selfComputeMeasure2(image1, image2):
     # Cosine Distance
+    
     # Check if either image is empty
     if len(image1) == 0 or len(image2) == 0:
         return float('nan')

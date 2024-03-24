@@ -41,7 +41,7 @@ def confusionMatrix(classified_data):
 
         # Increment the number of times that the given 'predicted class' was found with the given 'actual class'.
         confusion_matrix[predicted_class_index][actual_class_index] += 1
-
+    
     return confusion_matrix
 
 
@@ -92,7 +92,7 @@ def computeMacroPrecision(tps, fps, fns, data_size):
         return tp / (tp + fp) if tp + fp > 0 else 0
 
     # The macro-average precision of all classes.
-    precision = sum([computePrecision(tps[i], fps[i]) for i in range(data_size)]) / data_size
+    precision = sum([computePrecision(tps[i], fps[i]) / data_size for i in range(data_size)])
     return precision
 
 
@@ -105,7 +105,7 @@ def computeMacroRecall(tps, fps, fns, data_size):
         return tp / (tp + fn) if tp + fn > 0 else 0
 
     # The macro-average recall of all classes.
-    recall = sum([computeRecall(tps[i], fns[i]) for i in range(data_size)]) / data_size
+    recall = sum([computeRecall(tps[i], fns[i]) / data_size for i in range(data_size)])
     return recall
 
 

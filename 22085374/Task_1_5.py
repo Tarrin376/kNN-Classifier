@@ -103,18 +103,12 @@ def validateDataFormat(data, predicted):
 #                             ARE NOT PERMITTED.
 #
 
-def readAndResize(image_path, width=60, height=30, cache={}):
-    # To save computation, if the image has already been resized, return the resized image stored in the cache.
-    if image_path in cache:
-        return cache[image_path]
-    
+def readAndResize(image_path, width=60, height=30):
     # Read in the rgb image data from the image path given.
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
     # Resize the image with the given width and height
     resized_img = numpy.array(cv2.resize(image, (width, height)))
-    
-    # Cache the resized image
-    cache[image_path] = resized_img
+
     return resized_img
 
 
@@ -323,11 +317,20 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
         or not validateDataFormat(data_to_classify, False)):
         return classified_data
 
-    for data in data_to_classify[1:]:
+    data_to_classify_images = [read_func(data[0]) for data in data_to_classify[1:]]
+    training_data_images = [read_func(tData[0]) for tData in training_data[1:]]
+
+    for dIndex, data in enumerate(data_to_classify[1:]):
         # Read image from file path.
-        image1 = read_func(data[0])
-        # Compute the distance/similarity of all the training_data to the current data to classify.
-        measures_classes = [[measure_func(image1, read_func(tData[0])), tData[1]] for tData in training_data[1:]]
+        data_image = data_to_classify_images[dIndex]
+        # Stores the distance/similarity of all the training_data to the current image to classify.
+        measures_classes = [None] * (len(training_data) - 1)
+
+        for tIndex, tData in enumerate(training_data[1:]):
+            # Measure the distance/similarity between the current image to classify and the current training row image.
+            measure = measure_func(data_image, training_data_images[tIndex])
+            measures_classes[tIndex] = [measure, tData[1]]
+        
         # Get the classes found in the K nearest neighbours.
         nearest_neighbours_classes = get_neighbour_classes_func(measures_classes, k, similarity_flag)
         # Find the class that occurred the most in the K nearest neighbours.

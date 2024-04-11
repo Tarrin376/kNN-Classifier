@@ -58,16 +58,6 @@ def splitDataForCrossValidation(training_data, f):
         # Update next fold's start index
         start = end
     
-    # for i in range(f):
-    #     print(f"new_train {i} is")
-    #     for row in folds[i][2]:
-    #         print(row)
-        
-    #     print("\n")
-    #     print(f"new_test {i} is")
-    #     for row in folds[i][1]:
-    #         print(row)
-    
     return folds
 
 
@@ -157,8 +147,8 @@ def evaluateCrossValidation(classified_data_list, evaluation_func=Task_2.evaluat
     avg_accuracy = 0
 
     # Iterate through each classified round and compute its statistics and add them to the average sums.
-    for round in classified_data_list:
-        precision, recall, f_measure, accuracy = evaluation_func(round)
+    for cur_round in classified_data_list:
+        precision, recall, f_measure, accuracy = evaluation_func(cur_round)
         avg_precision += precision
         avg_recall += recall
         avg_f_measure += f_measure

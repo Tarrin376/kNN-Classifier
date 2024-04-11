@@ -34,19 +34,18 @@ def splitDataForCrossValidation(training_data, f):
     header = numpy.array([training_data[0].copy()])
     data = training_data[1:]
 
-    # Number of rows in the data (excluding the header).
-    num_rows = len(data)
     # The size of each fold after splitting the data into 'f' folds.
-    fold_size = num_rows // f
+    fold_size = len(data) // f
     # Remainder after splitting data into 'f' parts.
-    rem = num_rows % f
+    rem = len(data) % f
     # List of lists that stores every fold.
     folds = []
+    # Start index of the current fold's test data.
+    start = 0
 
-    for i in range(0, f):
-        # Start and end indices of fold i's test data.
-        start = (i * fold_size) + 1 if rem >= 0 and num_rows % f != 0 and i > 0 else (i * fold_size)
-        end = min(num_rows, start + fold_size + 1 if rem > 0 else start + fold_size)
+    for i in range(f):
+        # End index of fold i's test data.
+        end = min(len(data), start + fold_size + 1 if rem > 0 else start + fold_size)
 
         # Testing and training data for fold i.
         fold_training = numpy.concatenate((header, numpy.array(data[:start]), numpy.array(data[end:])), axis=0)
@@ -56,6 +55,18 @@ def splitDataForCrossValidation(training_data, f):
         folds.append([i, fold_testing, fold_training])
         # Decrement the remainder to ensure that the splits are evenly divided with at most a difference of 1.
         rem -= 1
+        # Update next fold's start index
+        start = end
+    
+    # for i in range(f):
+    #     print(f"new_train {i} is")
+    #     for row in folds[i][2]:
+    #         print(row)
+        
+    #     print("\n")
+    #     print(f"new_test {i} is")
+    #     for row in folds[i][1]:
+    #         print(row)
     
     return folds
 
@@ -111,8 +122,8 @@ def validateDataFormat(data, f):
     for row in data[1:]:
         freq[row[3]] = freq.get(row[3], 0) + 1
 
-    minFreq = min(freq.values())
-    maxFreq = max(freq.values())
+    minFreq = min(freq.values()) if len(data) > 1 else 0
+    maxFreq = max(freq.values()) if len(data) > 1 else 0
 
     # Check if the difference betweeen the lowest and highest frequency entries is larger than 1.
     if maxFreq - minFreq > 1:
@@ -136,7 +147,7 @@ def validateDataFormat(data, f):
 def evaluateCrossValidation(classified_data_list, evaluation_func=Task_2.evaluateKNN):
     rounds = len(classified_data_list)
 
-    # Edge case, to prevent divide by zero exception.
+    # To prevent divide by zero error.
     if rounds == 0:
         return 0, 0, 0, 0
     
@@ -196,7 +207,7 @@ def crossEvaluateKNN(training_data, k, measure_func, similarity_flag, f, knn_fun
         for row in classified[1:]:
             # Add the row consisting of the 'Path', 'ActualClass', 'PredictedClass', and 'FoldNumber' respectively.
             processed.append([row[0], row[1], row[2], fold[0]])
-    
+
     # Validate the data format of 'processed' given the numbers of folds 'f'.
     if not validateDataFormat(processed, f):
         return numpy.array([processed[0]])

@@ -38,7 +38,6 @@ def confusionMatrix(classified_data):
     for data in classified_data[1:]:
         actual_class_index = indices.get(data[1])
         predicted_class_index = indices.get(data[2])
-
         # Increment the number of times that the given 'predicted class' was found with the given 'actual class'.
         confusion_matrix[predicted_class_index][actual_class_index] += 1
     
@@ -84,47 +83,62 @@ def computeFNs(confusion_matrix):
 # OUTPUT: appropriate evaluation measures created using the macro-average approach.
 
 def computeMacroPrecision(tps, fps, fns, data_size):
+    # To prevent divide by zero error.
     if data_size == 0:
         return 0
-    
-    # Function that computes the precision for a given class.
-    def computePrecision(tp, fp):
-        return tp / (tp + fp) if tp + fp > 0 else 0
 
-    # The macro-average precision of all classes.
-    precision = sum([computePrecision(tps[i], fps[i]) / data_size for i in range(data_size)])
-    return precision
+    # Precision sum used to calculate the macro precision.
+    precision_sum = 0
+    for i in range(data_size):
+        # Calculate precision of the current class and add to precision sum.
+        precision = tps[i] / (tps[i] + fps[i]) if tps[i] + fps[i] > 0 else 0
+        precision_sum += precision
+    
+    # The macro precision.
+    return precision_sum / data_size
 
 
 def computeMacroRecall(tps, fps, fns, data_size):
+    # To prevent divide by zero error.
     if data_size == 0:
         return 0
     
-    # Function that computes the recall for a given class.
-    def computeRecall(tp, fn):
-        return tp / (tp + fn) if tp + fn > 0 else 0
+    # Recall sum used to calculate the macro recall.
+    recall_sum = 0
+    for i in range(data_size):
+        # Calculate recall of the current class and add to recall sum.
+        recall = tps[i] / (tps[i] + fns[i]) if tps[i] + fns[i] > 0 else 0
+        recall_sum += recall
 
-    # The macro-average recall of all classes.
-    recall = sum([computeRecall(tps[i], fns[i]) / data_size for i in range(data_size)])
-    return recall
+    # The macro recall.
+    return recall_sum / data_size
 
 
 def computeMacroFMeasure(tps, fps, fns, data_size):
-    # The macro-average precision of all classes.
-    precision = computeMacroPrecision(tps, fps, fns, data_size)
-    # The macro-average recall of all classes.
-    recall = computeMacroRecall(tps, fps, fns, data_size)
-
-    # Edge case to prevent divide by zero exception.
-    if precision + recall == 0:
+    # To prevent divide by zero error.
+    if data_size == 0:
         return 0
 
-    # F-Measure formula.
-    f_measure = (2 * precision * recall) / (precision + recall)
-    return f_measure
+    # F-measure sum used to calculate the macro f-measure.
+    f_measure_sum = 0
+    for i in range(data_size):
+        # Calculate precision of the current class.
+        precision = tps[i] / (tps[i] + fps[i]) if tps[i] + fps[i] > 0 else 0
+        # Calculate recall of the current class.
+        recall = tps[i] / (tps[i] + fns[i]) if tps[i] + fns[i] > 0 else 0
+
+        # To prevent divide by zero error.
+        if precision + recall != 0:
+            # Calculate f-measure of the current class and add to f-measure sum.
+            f_measure = (2 * precision * recall) / (precision + recall)
+            f_measure_sum += f_measure
+
+    # The macro f-measure.
+    return f_measure_sum / data_size
 
 
 def computeAccuracy(tps, fps, fns, data_size):
+    # To prevent divide by zero error.
     if data_size == 0:
         return 0
     

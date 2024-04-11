@@ -317,6 +317,7 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
         or not validateDataFormat(data_to_classify, False)):
         return classified_data
 
+    # Precompute the training data images and images that will be classified.
     data_to_classify_images = [read_func(data[0]) for data in data_to_classify[1:]]
     training_data_images = [read_func(tData[0]) for tData in training_data[1:]]
 
@@ -338,7 +339,7 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
         # Add data along with its computed class type 'winner'.
         classified_data.append([data[0], data[1], winner])
     
-    # Check that the classified data is valid
+    # If the classified data format is not valid, return only the header.
     if not validateDataFormat(classified_data, True):
         return [classified_data[0]]
 

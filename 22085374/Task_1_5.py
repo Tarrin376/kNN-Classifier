@@ -222,7 +222,7 @@ def selfComputeMeasure2(image1, image2):
 #                             was in the k nearest neighbours
 #
 def getClassesOfKNearestNeighbours(measures_classes, k, similarity_flag):
-    nearest_neighbours_classes = {}
+    nearest_neighbours_classes = {cur_class: 0 for cur_class in classification_scheme}
     # Priority Queue using a Min-Heap to get K nearest neighbours
     pq = []
 
@@ -245,7 +245,7 @@ def getClassesOfKNearestNeighbours(measures_classes, k, similarity_flag):
     while pq:
         cur = heapq.heappop(pq)
         # Increment count for how many times a particular class from the scheme was found in the K nearest neighbours.
-        nearest_neighbours_classes[cur[1]] = nearest_neighbours_classes.get(cur[1], 0) + 1
+        nearest_neighbours_classes[cur[1]] = nearest_neighbours_classes.get(cur[1]) + 1
 
     return nearest_neighbours_classes
 
@@ -272,7 +272,7 @@ def getMostCommonClass(nearest_neighbours_classes):
 
     for class_type in classification_scheme:
         # Number of times the class type was found in the K nearest neighbours.
-        timesFound = nearest_neighbours_classes.get(class_type, 0)
+        timesFound = nearest_neighbours_classes.get(class_type)
 
         # If it was found more than the current most frequent class, update.
         if timesFound > bestTimesFound:

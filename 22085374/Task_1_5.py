@@ -106,8 +106,13 @@ def validateDataFormat(data, predicted):
 def readAndResize(image_path, width=60, height=30):
     # Read in the rgb image data from the image path given.
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    # Resize the image with the given width and height
-    resized_img = numpy.array(cv2.resize(image, (width, height)))
+
+    # If no image was found at the specified file path, return empty array.
+    if image is None:
+        return numpy.array([])
+    
+    # Resize the image with the given width and height.
+    resized_img = cv2.resize(image, (width, height))
 
     return resized_img
 
@@ -272,7 +277,7 @@ def getMostCommonClass(nearest_neighbours_classes):
 
     for class_type in classification_scheme:
         # Number of times the class type was found in the K nearest neighbours.
-        timesFound = nearest_neighbours_classes.get(class_type)
+        timesFound = nearest_neighbours_classes.get(class_type, 0)
 
         # If it was found more than the current most frequent class, update.
         if timesFound > bestTimesFound:
@@ -315,7 +320,7 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
     # Check that the training data and the data to classify is valid.
     if (len(training_data) == 0 or len(data_to_classify) == 0 or not validateDataFormat(training_data, False) 
         or not validateDataFormat(data_to_classify, False)):
-        return classified_data
+        return numpy.array(classified_data)
 
     # Precompute the training data images and images that will be classified.
     data_to_classify_images = [read_func(data[0]) for data in data_to_classify[1:]]
@@ -341,7 +346,7 @@ def kNN(training_data, k, measure_func, similarity_flag, data_to_classify,
     
     # If the classified data format is not valid, return only the header.
     if not validateDataFormat(classified_data, True):
-        return [classified_data[0]]
+        return numpy.array([classified_data[0]])
 
     return numpy.array(classified_data)
 

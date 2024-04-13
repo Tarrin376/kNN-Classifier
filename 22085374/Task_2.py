@@ -36,7 +36,9 @@ def confusionMatrix(classified_data):
     indices = {class_type:index for index, class_type in enumerate(Task_1_5.classification_scheme)}
 
     for data in classified_data[1:]:
+        # Index of the actual class in the confusion matrix.
         actual_class_index = indices.get(data[1])
+        # Index of the predicted class in the confusion matrix.
         predicted_class_index = indices.get(data[2])
         # Increment the number of times that the given 'predicted class' was found with the given 'actual class'.
         confusion_matrix[predicted_class_index][actual_class_index] += 1

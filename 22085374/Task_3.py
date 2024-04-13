@@ -112,8 +112,8 @@ def validateDataFormat(data, f):
     for row in data[1:]:
         freq[row[3]] = freq.get(row[3], 0) + 1
 
-    minFreq = min(freq.values()) if len(data) > 1 else 0
-    maxFreq = max(freq.values()) if len(data) > 1 else 0
+    minFreq = min(freq.values()) if len(freq) > 0 else 0
+    maxFreq = max(freq.values()) if len(freq) > 0 else 0
 
     # Check if the difference betweeen the lowest and highest frequency entries is larger than 1.
     if maxFreq - minFreq > 1:

@@ -1,34 +1,8 @@
-# In this file please complete the following task:
-#
-# Task 3 [6] Cross validation
-#
-# Evaluate your classifiers using the k-fold cross-validation technique covered in the lectures
-# (use the training data only). Output their average precisions, recalls, F-measures and accuracies.
-# You need to implement the validation yourself. Remember that folds need to be of roughly equal size.
-# The template contains a range of functions you need to implement for this task.
-#
-
-# You are expected to rely on solutions from Task_1_5/Task_2 here! Do not reimplement kNN from scratch.
-# You can ONLY rely on functions that were originally in the template in your final submission!
-# Any functions you have created on your own in these files and need here, must be defined here.
-
 import os
 import Task_1_5
 import Task_2
 import numpy
 from Task_1_5 import computeMeasure1,computeMeasure2,computeMeasure3,selfComputeMeasure1,selfComputeMeasure2
-
-
-# This function takes the data for cross evaluation and returns training_data a list of lists s.t. the first element
-# is the round number, second is the training data for that round, and third is the testing data for that round
-#
-# INPUT: training_data      : a numpy array was read from the training data csv (see parse_arguments function)
-#        f                  : the number of folds to split the data into (which is also same as # of rounds)
-# OUTPUT: folds             : a list of lists s.t. the first element is the round number, second is the numpy array
-#                             representing the training data for that round, and third is the numpy array representing
-#                             the testing data for that round
-#                             You must make sure that the training and testing data are ready for use
-#                             (e.g. contain the right headers already)
 
 def splitDataForCrossValidation(training_data, f):
     header = numpy.array([training_data[0].copy()])
@@ -59,26 +33,6 @@ def splitDataForCrossValidation(training_data, f):
         start = end
     
     return folds
-
-
-# In this function, please implement validation of the data that is produced by the cross evaluation function PRIOR to
-# the addition of rows with the average measures.
-#
-# INPUT:  data              : the numpy array that was produced by the crossEvaluateKNN function BEFORE the
-#                             addition of the rows with evaluation measures
-#         f                 : number of folds to validate against
-#
-# OUTPUT: boolean value     : True if the data contains the header ["Path", "ActualClass", "PredictedClass","FoldNumber"]
-#                             (there can be more column names, but at least these four at the start must be present)
-#                             AND the values in the "Path" column (if there are any) are file paths
-#                             AND the values in the "ActualClass" and "PredictedClass" columns
-#                             (if there are any) are classes from the scheme
-#                             AND the values in the "FoldNumber" column are integers in [0,f) range
-#                             AND there are as many Path entries as ActualClass and PredictedClass and FoldNumber entries
-#                             AND the number of entries per each integer in [0,f) range for FoldNumber are approximately
-#                             the same (they can differ by at most 1)
-#
-#                             False otherwise
 
 def validateDataFormat(data, f):
     header = ",".join(data[0])
@@ -121,19 +75,6 @@ def validateDataFormat(data, f):
 
     return True
 
-
-# This function takes the classified data from each cross validation round and calculates the average precision, recall,
-# accuracy and f-measure for them.
-# Invoke either the Task 2 evaluation function or the dummy function here, do not code from scratch!
-#
-# INPUT: classified_data_list
-#                           : a list of numpy arrays representing classified data computed for each cross validation round
-#        evaluation_func    : the function to be invoked for the evaluation (by default, it is the one from
-#                             Task_2, but you can use dummy)
-# OUTPUT: avg_precision, avg_recall, avg_f_measure, avg_accuracy
-#                           : average evaluation measures. You are expected to evaluate every classified data in the
-#                             list and average out these values in the usual way.
-
 def evaluateCrossValidation(classified_data_list, evaluation_func=Task_2.evaluateKNN):
     rounds = len(classified_data_list)
 
@@ -157,29 +98,6 @@ def evaluateCrossValidation(classified_data_list, evaluation_func=Task_2.evaluat
     # Compute the average of each statistic.
     return avg_precision / rounds, avg_recall / rounds, avg_f_measure / rounds, avg_accuracy / rounds
 
-
-# In this task you are expected to perform cross-validation where f defines the number of folds to consider.
-# "processed" holds the information from training data along with the following information: for each image,
-# stated the id of the fold it landed in, and the predicted class it was assigned once it was chosen for testing data.
-# After everything is done, we add the average measures at the end. The writing to csv is done in a different function.
-# You are expected to invoke the Task 1 kNN classifier or the Dummy classifier here, do not implement these things
-# from scratch!
-#
-# INPUT: training_data      : a numpy array that was read from the training data csv (see parse_arguments function)
-#        k                  : the value of k neighbours, to be passed to the kNN classifier
-#        measure_func       : the function to be invoked to calculate similarity/distance
-#        similarity_flag    : a boolean value stating that the measure above used to produce the values is a distance
-#                             (False) or a similarity (True)
-#        knn_func           : the function to be invoked for the classification (by default, it is the one from
-#                             Task_1_5, but you can use dummy)
-#        split_func         : the function used to split data for cross validation (by default, it is the one above)
-#        f                  : number of folds to use in cross validation
-# OUTPUT: processed       : a list of lists which expands the training_data with columns stating the fold number to
-#                             which a given image was assigned and the predicted class for that image; and with rows
-#                             that contain the average evaluation measures (see the h and v variables)
-#                             IF validation of the processed variable fails (prior to addition of evaluation measures),
-#                             return only the header!
-# Again, please remember to have a look at the Dummy file!
 def crossEvaluateKNN(training_data, k, measure_func, similarity_flag, f, knn_func=Task_1_5.kNN,
                      split_func=splitDataForCrossValidation):
     # This adds the header
@@ -214,17 +132,7 @@ def crossEvaluateKNN(training_data, k, measure_func, similarity_flag, f, knn_fun
     processed = numpy.append(processed, [v], axis=0)
 
     return processed
-
-
-##########################################################################################
-# You should not need to modify things below this line - it's mostly reading and writing #
-# Be aware that error handling below is...limited.                                       #
-##########################################################################################
-
-
-# This function reads the necessary arguments (see parse_arguments function in Task_1_5),
-# and based on them evaluates the kNN classifier using the cross-validation technique. The results
-# are written into an appropriate csv file.
+                         
 def main():
     opts = Task_1_5.parseArguments()
     if not opts:
